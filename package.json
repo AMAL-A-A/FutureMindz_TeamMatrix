@@ -1,0 +1,19 @@
+{
+  "name": "stockflow-ai",
+  "version": "1.0.0",
+  "description": "Agentic AI Inventory Management System with 6-stage pipeline, strategic plan embedding, and human-in-the-loop approval",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "test": "node server/tests/runTests.js"
+  },
+  "keywords": ["inventory", "ai", "agentic", "forecasting", "logistics", "b2b"],
+  "author": "StockFlow AI Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  }
+}

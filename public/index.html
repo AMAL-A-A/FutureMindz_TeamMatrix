@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockFlow AI — Agentic Inventory Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-primary: #0a0e27;
+      --bg-secondary: #12152e;
+      --bg-card: #1a1e3a;
+      --bg-hover: #232850;
+      --text-primary: #e4e6f0;
+      --text-secondary: #8b90a8;
+      --text-muted: #5a5e7a;
+      --accent: #4f7cff;
+      --accent-light: #6b8eff;
+      --accent-glow: rgba(79, 124, 255, 0.3);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+      --purple: #8b5cf6;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+    }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+    ::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* Layout */
+    .app { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 260px; background: var(--bg-secondary); padding: 0;
+      position: fixed; height: 100vh; overflow-y: auto; z-index: 100;
+      border-right: 1px solid var(--border);
+      transition: width 0.3s;
+    }
+    .main-content { margin-left: 260px; flex: 1; padding: 24px 32px; min-height: 100vh; }
+
+    /* Sidebar */
+    .logo {
+      padding: 24px 20px; display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 800; color: white;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo-text span { color: var(--accent); }
+    .nav-section { padding: 16px 12px; }
+    .nav-section-title {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text-muted); margin-bottom: 8px; padding: 0 12px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+      border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;
+      color: var(--text-secondary); transition: all 0.2s; margin-bottom: 2px;
+    }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent-glow); color: var(--accent-light); }
+    .nav-item .nav-icon { width: 20px; text-align: center; font-size: 16px; }
+    .nav-badge {
+      margin-left: auto; background: var(--danger); color: white;
+      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--border-hover); }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 16px; font-weight: 600; }
+    .card-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary {
+      background: var(--accent); color: white;
+    }
+    .btn-primary:hover { background: var(--accent-light); box-shadow: 0 0 20px var(--accent-glow); }
+    .btn-secondary { background: var(--bg-hover); color: var(--text-primary); }
+    .btn-secondary:hover { background: var(--bg-hover); border-color: var(--accent); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-sm { padding: 6px 14px; font-size: 13px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    }
+    .badge-critical { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .badge-high { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .badge-medium { background: rgba(59,130,246,0.15); color: var(--info); }
+    .badge-low { background: rgba(34,197,94,0.15); color: var(--success); }
+    .badge-info { background: rgba(139,92,246,0.15); color: var(--purple); }
+    .badge-assumption { background: rgba(245,158,11,0.1); color: var(--warning); border: 1px dashed var(--warning); }
+
+    /* Grid */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 1200px) { .grid-4 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 800px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+    /* Stat cards */
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--accent);
+    }
+    .stat-card.danger::before { background: var(--danger); }
+    .stat-card.success::before { background: var(--success); }
+    .stat-card.warning::before { background: var(--warning); }
+    .stat-card.info::before { background: var(--info); }
+    .stat-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .stat-value { font-size: 32px; font-weight: 700; letter-spacing: -1px; }
+    .stat-change { font-size: 12px; margin-top: 4px; }
+    .stat-change.positive { color: var(--success); }
+    .stat-change.negative { color: var(--danger); }
+
+    /* Tables */
+    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table th {
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border);
+      color: var(--text-secondary); font-weight: 600; font-size: 12px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .table tr:hover td { background: var(--bg-hover); }
+
+    /* Pipeline visualization */
+    .pipeline {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;
+    }
+    .pipeline-stage {
+      flex: 1; min-width: 160px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 10px; padding: 16px;
+      position: relative; cursor: pointer; transition: all 0.2s;
+    }
+    .pipeline-stage:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .pipeline-stage.active { border-color: var(--accent); background: var(--accent-glow); }
+    .pipeline-stage::after {
+      content: '→'; position: absolute; right: -16px; top: 50%; transform: translateY(-50%);
+      font-size: 20px; color: var(--text-muted); z-index: 1;
+    }
+    .pipeline-stage:last-child::after { display: none; }
+    .pipeline-stage-num {
+      font-size: 11px; color: var(--accent); font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .pipeline-stage-name { font-size: 14px; font-weight: 600; margin: 4px 0; }
+    .pipeline-stage-desc { font-size: 11px; color: var(--text-secondary); }
+    .pipeline-stage-time { font-size: 10px; color: var(--text-muted); margin-top: 6px; }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 6px; background: var(--bg-hover); border-radius: 3px;
+      overflow: hidden; margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%; background: var(--accent); border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    /* Confidence meter */
+    .confidence-meter {
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .confidence-bar {
+      width: 60px; height: 6px; background: var(--bg-hover); border-radius: 3px; overflow: hidden;
+    }
+    .confidence-fill { height: 100%; border-radius: 3px; }
+    .confidence-text { font-size: 11px; font-weight: 600; }
+
+    /* Scenario selector */
+    .scenario-selector {
+      display: flex; gap: 12px; margin-bottom: 20px;
+    }
+    .scenario-card {
+      flex: 1; padding: 16px; border: 2px solid var(--border); border-radius: 12px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .scenario-card:hover { border-color: var(--accent); }
+    .scenario-card.selected { border-color: var(--accent); background: var(--accent-glow); }
+    .scenario-card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .scenario-card-desc { font-size: 12px; color: var(--text-secondary); }
+
+    /* Select dropdowns */
+    .select-group { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+    select, input, textarea {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px; color: var(--text-primary);
+      font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s;
+    }
+    select:focus, input:focus, textarea:focus { border-color: var(--accent); }
+    select { cursor: pointer; min-width: 200px; }
+
+    /* Loading */
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10,14,39,0.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; flex-direction: column; gap: 20px;
+    }
+    .loading-spinner {
+      width: 60px; height: 60px; border: 4px solid var(--bg-hover);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 16px; font-weight: 600; color: var(--text-secondary); }
+    .loading-stages { display: flex; gap: 8px; margin-top: 8px; }
+    .loading-stage-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: var(--bg-hover);
+      transition: background 0.3s;
+    }
+    .loading-stage-dot.done { background: var(--success); }
+    .loading-stage-dot.active { background: var(--accent); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* Transfer card */
+    .transfer-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px; margin-bottom: 12px;
+      border-left: 4px solid var(--accent);
+    }
+    .transfer-card.rejected { border-left-color: var(--danger); opacity: 0.7; }
+    .transfer-card.approved { border-left-color: var(--success); }
+    .transfer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .transfer-route {
+      display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;
+    }
+    .transfer-arrow { color: var(--accent); }
+    .transfer-economics {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+      margin: 12px 0;
+    }
+    .econ-item { text-align: center; }
+    .econ-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+    .econ-value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+    .econ-value.positive { color: var(--success); }
+    .econ-value.negative { color: var(--danger); }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .tab {
+      padding: 10px 16px; cursor: pointer; font-size: 14px; font-weight: 500;
+      color: var(--text-secondary); border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: var(--text-primary); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* Chat */
+    .chat-container {
+      max-height: 400px; overflow-y: auto; padding: 16px;
+      background: var(--bg-secondary); border-radius: 12px; margin-bottom: 12px;
+    }
+    .chat-message { margin-bottom: 12px; }
+    .chat-message.user { text-align: right; }
+    .chat-message .msg-bubble {
+      display: inline-block; padding: 10px 16px; border-radius: 12px;
+      max-width: 80%; font-size: 14px;
+    }
+    .chat-message.user .msg-bubble { background: var(--accent); color: white; }
+    .chat-message.ai .msg-bubble { background: var(--bg-card); border: 1px solid var(--border); }
+    .chat-input { display: flex; gap: 8px; }
+    .chat-input input { flex: 1; }
+
+    /* Before/After */
+    .ba-comparison { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+    .ba-col { padding: 12px; }
+    .ba-col.before { background: rgba(239,68,68,0.05); border-radius: 8px 0 0 8px; }
+    .ba-col.arrow { background: var(--bg-hover); display: flex; align-items: center; justify-content: center; }
+    .ba-col.after { background: rgba(34,197,94,0.05); border-radius: 0 8px 8px 0; }
+    .ba-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); }
+    .ba-value { font-size: 22px; font-weight: 700; margin: 4px 0; }
+    .ba-delta { font-size: 12px; }
+
+    /* Assumption box */
+    .assumption-box {
+      background: rgba(245,158,11,0.08); border: 1px dashed var(--warning);
+      border-radius: 8px; padding: 12px; margin: 8px 0; font-size: 13px;
+      color: var(--warning);
+    }
+    .assumption-box::before { content: '⚠ ASSUMPTION: '; font-weight: 700; }
+
+    /* Ethics */
+    .ethics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .ethics-item {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px;
+    }
+    .ethics-principle { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+    .ethics-impl { font-size: 12px; color: var(--text-secondary); }
+
+    /* Subscription */
+    .sub-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .sub-card {
+      background: var(--bg-card); border: 2px solid var(--border);
+      border-radius: 12px; padding: 24px; text-align: center; position: relative;
+    }
+    .sub-card.featured { border-color: var(--accent); }
+    .sub-card.featured::after {
+      content: 'MOST POPULAR'; position: absolute; top: -12px; left: 50%;
+      transform: translateX(-50%); background: var(--accent); color: white;
+      padding: 3px 12px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    }
+    .sub-name { font-size: 18px; font-weight: 700; }
+    .sub-price { font-size: 36px; font-weight: 800; margin: 12px 0; }
+    .sub-features { list-style: none; text-align: left; margin-top: 16px; }
+    .sub-features li { padding: 6px 0; font-size: 13px; color: var(--text-secondary); }
+    .sub-features li::before { content: '✓ '; color: var(--success); font-weight: 700; }
+
+    /* Map */
+    .map-container {
+      background: var(--bg-secondary); border-radius: 12px; padding: 20px;
+      min-height: 300px; position: relative; overflow: hidden;
+    }
+    .map-node {
+      position: absolute; padding: 8px 14px; border-radius: 8px;
+      background: var(--bg-card); border: 2px solid var(--accent);
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .map-node:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent-glow); }
+    .map-node.warehouse { border-color: var(--purple); }
+    .map-node.critical { border-color: var(--danger); animation: pulse-border 1.5s infinite; }
+    @keyframes pulse-border { 0%,100% { box-shadow: 0 0 0 rgba(239,68,68,0); } 50% { box-shadow: 0 0 20px rgba(239,68,68,0.5); } }
+    .map-line {
+      position: absolute; height: 2px; background: var(--accent);
+      transform-origin: left center; opacity: 0.3;
+    }
+    .map-line.active { opacity: 0.8; animation: flow 2s linear infinite; }
+    @keyframes flow { 0%,100% { opacity: 0.3; } 50% { opacity: 0.9; } }
+
+    /* Role indicator */
+    .role-indicator {
+      display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+      font-size: 13px;
+    }
+    .role-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+
+    /* Section headers */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .section-title { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .section-desc { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* View container */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Stockout distortion callout */
+    .distortion-callout {
+      background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(239,68,68,0.1));
+      border: 1px solid var(--warning); border-radius: 12px; padding: 16px;
+      margin: 12px 0;
+    }
+    .distortion-callout-title { font-size: 14px; font-weight: 700; color: var(--warning); }
+    .distortion-callout-body { font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+
+    /* Tooltip */
+    [data-tooltip] { position: relative; }
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%;
+      transform: translateX(-50%); background: var(--bg-secondary); color: var(--text-primary);
+      padding: 6px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap;
+      z-index: 100; border: 1px solid var(--border); margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">S</div>
+        <div class="logo-text">Stock<span>Flow</span> AI</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Dashboard</div>
+        <div class="nav-item active" data-view="overview">
+          <span class="nav-icon">📊</span> Overview
+        </div>
+        <div class="nav-item" data-view="pipeline">
+          <span class="nav-icon">⚙️</span> Agent Pipeline
+        </div>
+        <div class="nav-item" data-view="inventory">
+          <span class="nav-icon">📦</span> Inventory
+        </div>
+        <div class="nav-item" data-view="forecast">
+          <span class="nav-icon">📈</span> Forecasts
+        </div>
+        <div class="nav-item" data-view="imbalances">
+          <span class="nav-icon">⚠️</span> Imbalances
+          <span class="nav-badge" id="imbalance-badge" style="display:none;">0</span>
+        </div>
+        <div class="nav-item" data-view="transfers">
+          <span class="nav-icon">🚚</span> Transfers
+          <span class="nav-badge" id="transfer-badge" style="display:none;">0</span>
+        </div>
+        <div class="nav-item" data-view="logistics">
+          <span class="nav-icon">🗺️</span> Logistics Map
+        </div>
+        <div class="nav-item" data-view="advisory">
+          <span class="nav-icon">🤖</span> AI Advisory
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Configure</div>
+        <div class="nav-item" data-view="strategy">
+          <span class="nav-icon">🎯</span> Strategic Plan
+        </div>
+        <div class="nav-item" data-view="transcript">
+          <span class="nav-icon">📝</span> Meeting Upload
+        </div>
+        <div class="nav-item" data-view="subscription">
+          <span class="nav-icon">💎</span> Subscription
+        </div>
+        <div class="nav-item" data-view="ethics">
+          <span class="nav-icon">⚖️</span> AI Ethics
+        </div>
+      </div>
+      <div class="nav-section" style="padding-bottom: 24px;">
+        <div class="nav-section-title">Session</div>
+        <div style="padding: 0 12px;">
+          <div class="role-indicator">
+            <div class="role-dot"></div>
+            <span id="current-role">Planner (Sara)</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; padding: 0 12px;">
+            Human approval required for all actions. AI provides recommendations only.
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Overview View -->
+      <div class="view active" id="view-overview">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Dashboard Overview</div>
+            <div class="section-desc">Real-time inventory intelligence powered by agentic AI</div>
+          </div>
+          <button class="btn btn-primary" onclick="runPipeline()">⚡ Run Agent Pipeline</button>
+        </div>
+
+        <!-- Scenario Selector -->
+        <div class="scenario-selector" id="scenario-selector">
+          <div class="scenario-card selected" data-scenario="normal" onclick="selectScenario('normal')">
+            <div class="scenario-card-title">📋 Normal Operations</div>
+            <div class="scenario-card-desc">Multi-branch electronics retailer. Clean data, straightforward transfers. 5 SKUs, 4 locations.</div>
+          </div>
+          <div class="scenario-card" data-scenario="difficult" onclick="selectScenario('difficult')">
+            <div class="scenario-card-title">🔥 Difficult Operations</div>
+            <div class="scenario-card-desc">Grocery+Electronics hybrid. Missing data, stockout distortion, SKU-specific disruption, transfer trap. 6 SKUs, 4 locations.</div>
+          </div>
+        </div>
+
+        <!-- Strategic Plan Quick Config -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🎯 Business Strategic Plan</div>
+              <div class="card-subtitle">The agent adapts its recommendations to your business niche and strategy</div>
+            </div>
+          </div>
+          <div class="select-group">
+            <div class="form-group">
+              <label class="form-label">Business Niche</label>
+              <select id="niche-select">
+                <option value="electronics">Electronics & Technology</option>
+                <option value="grocery">Grocery & Fresh Food</option>
+                <option value="fashion">Fashion & Apparel</option>
+                <option value="automotive">Automotive Parts</option>
+                <option value="appliances">Home Appliances</option>
+                <option value="mixed">Mixed Retail (Multi-Category)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Strategy</label>
+              <select id="strategy-select">
+                <option value="">Auto (from niche)</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="runPipeline()">Run Pipeline</button>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid-4" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Inventory Value</div>
+            <div class="stat-value" id="stat-inv-value">—</div>
+            <div class="stat-change" id="stat-inv-change">Run pipeline to see data</div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-label">Active Shortages</div>
+            <div class="stat-value" id="stat-shortages">—</div>
+            <div class="stat-change negative" id="stat-shortages-detail"></div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-label">Excess Inventory</div>
+            <div class="stat-value" id="stat-excess">—</div>
+            <div class="stat-change" id="stat-excess-detail"></div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-label">Recommended Net Benefit</div>
+            <div class="stat-value" id="stat-benefit">—</div>
+            <div class="stat-change positive" id="stat-benefit-detail"></div>
+          </div>
+        </div>
+
+        <!-- Pipeline Overview -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">6-Stage Agent Pipeline</div>
+              <div class="card-subtitle">Click a stage to see detailed results</div>
+            </div>
+          </div>
+          <div class="pipeline" id="pipeline-viz">
+            <div class="pipeline-stage" onclick="switchView('pipeline')">
+              <div class="pipeline-stage-num">Stage 1</div>
+              <div class="pipeline-stage-name">Accept Data</div>
+              <div class="pipeline-stage-desc">Ingest SKUs, sales, inventory, disruptions</div>
+              <div class="pipeline-stage-time" id="stage1-time">—</div>
+            </div>
+            <div class="pipeline-stage" onclick="switchView('inventory')">
+              <div class="pipeline-stage-num">Stage 2</div>
+              <div class="pipeline-stage-name">Understand Inventory</div>
+              <div class="pipeline-stage-desc">Available/reserved/incoming with age</div>
+              <div class="pipeline-stage-time" id="stage2-time">—</div>
+            </div>
+            <div class="pipeline-stage" onclick="switchView('forecast')">
+              <div class="pipeline-stage-num">Stage 3</div>
+              <div class="pipeline-stage-name">Forecast Demand</div>
+              <div class="pipeline-stage-desc">30-day forecasts with confidence</div>
+              <div class="pipeline-stage-time" id="stage3-time">—</div>
+            </div>
+            <div class="pipeline-stage" onclick="switchView('imbalances')">
+              <div class="pipeline-stage-num">Stage 4</div>
+              <div class="pipeline-stage-name">Identify Imbalances</div>
+              <div class="pipeline-stage-desc">Shortages, excess, ageing, distortion</div>
+              <div class="pipeline-stage-time" id="stage4-time">—</div>
+            </div>
+            <div class="pipeline-stage" onclick="switchView('transfers')">
+              <div class="pipeline-stage-num">Stage 5</div>
+              <div class="pipeline-stage-name">Recommend Actions</div>
+              <div class="pipeline-stage-desc">Transfers with cost-benefit analysis</div>
+              <div class="pipeline-stage-time" id="stage5-time">—</div>
+            </div>
+            <div class="pipeline-stage" onclick="switchView('transfers')">
+              <div class="pipeline-stage-num">Stage 6</div>
+              <div class="pipeline-stage-name">Explain Impact</div>
+              <div class="pipeline-stage-desc">Before/after + approval gate</div>
+              <div class="pipeline-stage-time" id="stage6-time">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Advisory Preview -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🤖 AI Strategic Advisory</div>
+              <div class="card-subtitle">Recommendations tailored to your business strategy</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="switchView('advisory')">View All</button>
+          </div>
+          <div id="advisory-preview">
+            <div style="color: var(--text-secondary); font-size: 14px; padding: 20px; text-align: center;">
+              Run the pipeline to see AI advisory insights
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline View -->
+      <div class="view" id="view-pipeline">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Agent Pipeline</div>
+            <div class="section-desc">6-stage agentic workflow with full traceability</div>
+          </div>
+        </div>
+        <div id="pipeline-detail"></div>
+      </div>
+
+      <!-- Inventory View -->
+      <div class="view" id="view-inventory">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Inventory Understanding</div>
+            <div class="section-desc">Available, reserved, incoming stock with age classification</div>
+          </div>
+        </div>
+        <div id="inventory-detail"></div>
+      </div>
+
+      <!-- Forecast View -->
+      <div class="view" id="view-forecast">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Demand Forecasting</div>
+            <div class="section-desc">30-day forecasts with confidence intervals, assumptions, and data-quality flags</div>
+          </div>
+        </div>
+        <div id="forecast-detail"></div>
+      </div>
+
+      <!-- Imbalances View -->
+      <div class="view" id="view-imbalances">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Imbalance Identification</div>
+            <div class="section-desc">Shortages, excess, ageing, and stockout-distorted history</div>
+          </div>
+        </div>
+        <div id="imbalances-detail"></div>
+      </div>
+
+      <!-- Transfers View -->
+      <div class="view" id="view-transfers">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Transfer Recommendations</div>
+            <div class="section-desc">Cost-benefit analyzed transfers with human approval gate</div>
+          </div>
+        </div>
+        <div id="transfers-detail"></div>
+      </div>
+
+      <!-- Logistics Map View -->
+      <div class="view" id="view-logistics">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Logistics Network</div>
+            <div class="section-desc">Track stock movement between locations in real-time</div>
+          </div>
+        </div>
+        <div id="logistics-detail"></div>
+      </div>
+
+      <!-- Advisory View -->
+      <div class="view" id="view-advisory">
+        <div class="section-header">
+          <div>
+            <div class="section-title">AI Strategic Advisory</div>
+            <div class="section-desc">Recommendations based on your strategic plan and business niche</div>
+          </div>
+        </div>
+        <div id="advisory-detail"></div>
+      </div>
+
+      <!-- Strategy View -->
+      <div class="view" id="view-strategy">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Strategic Plan Configuration</div>
+            <div class="section-desc">Embed your business strategy into the AI agent</div>
+          </div>
+        </div>
+        <div id="strategy-detail"></div>
+      </div>
+
+      <!-- Transcript View -->
+      <div class="view" id="view-transcript">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Meeting Transcript Integration</div>
+            <div class="section-desc">Upload transcripts from strategic meetings to update the agent's context</div>
+          </div>
+        </div>
+        <div id="transcript-detail"></div>
+      </div>
+
+      <!-- Subscription View -->
+      <div class="view" id="view-subscription">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Subscription Plans</div>
+            <div class="section-desc">Choose the plan that fits your business</div>
+          </div>
+        </div>
+        <div id="subscription-detail"></div>
+      </div>
+
+      <!-- Ethics View -->
+      <div class="view" id="view-ethics">
+        <div class="section-header">
+          <div>
+            <div class="section-title">AI Ethics & Transparency</div>
+            <div class="section-desc">Our principles and how they're implemented</div>
+          </div>
+        </div>
+        <div id="ethics-detail"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loading-text">Running 6-stage agent pipeline...</div>
+    <div class="loading-stages">
+      <div class="loading-stage-dot" id="ls-1"></div>
+      <div class="loading-stage-dot" id="ls-2"></div>
+      <div class="loading-stage-dot" id="ls-3"></div>
+      <div class="loading-stage-dot" id="ls-4"></div>
+      <div class="loading-stage-dot" id="ls-5"></div>
+      <div class="loading-stage-dot" id="ls-6"></div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
